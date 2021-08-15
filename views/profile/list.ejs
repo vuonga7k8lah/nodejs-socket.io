@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include ("../partials/header") %>
+
+    <body>
+        <%- include ("../partials/navbar") %>
+            <div class="container">
+                <div class="mt-4">
+                    <h2 style="text-align: center;">List Data</h2>
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">STT</th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Image</th>
+                                            <th scope="col">Level</th>
+                                            <th scope="col">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% data.forEach(function(row){
+                            %>
+                                            <tr>
+                                                <th scope="row">
+                                                    <%= row._id%>
+                                                </th>
+                                                <td>
+                                                    <%= row.Name%>
+                                                </td>
+                                                <td>
+                                                    <img src="/upload/<%= row.Image%>" alt="<%= row.Name%>" style="height: 200px;width: 200px;">
+                                                </td>
+                                                <td>
+                                                    <%= row.Level%>
+                                                </td>
+                                                <td>
+                                                    <a href="/me/edit?id=<%=row._id%>" class="btn btn-sm btn-info edit">Edit</a>
+                                                    <a href="/me/delete?id=<%=row._id%>" class="btn btn-sm btn-danger delete">Delete</a>
+                                                </td>
+                                            </tr>
+                                            <%
+                        })%>
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <%- include ("../partials/footer") %>
+    </body>
+
+</html>
