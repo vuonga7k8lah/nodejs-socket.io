@@ -4,6 +4,7 @@ const db = require('./Database/connect');
 const cookieParser = require('cookie-parser')
 let server = require('http').Server(app);
 const io = require('socket.io')(server);
+const Port = process.env.PORT || 3000;
 
 //connect database
 db.connect();
@@ -65,7 +66,7 @@ const UsersModel = require('./Models/UsersModel');
 app.set("view engine", "ejs");
 app.set("views", "./views");
 app.use(express.static("public"));
-server.listen(3000);
+server.listen(Port);
 
 
 //socket io
