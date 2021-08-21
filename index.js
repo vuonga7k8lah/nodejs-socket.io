@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const db = require('./Database/connect');
+const cookieParser = require('cookie-parser')
 let server = require('http').Server(app);
 const io = require('socket.io')(server);
 
@@ -28,34 +29,85 @@ var upload = multer({
         }
     }
 }).single("image");
+
+//cookie parser
+app.use(cookieParser());
+
+//shares
+let helper = require('./Shares/helper');
+
+
 //config method- override
 const methodOverride = require('method-override');
 app.use(methodOverride('_method'));
 
+//config jwt
+var jwt = require('jsonwebtoken');
+const secretKey = 'vuong_kma';
 
-// config theme plate
-app.set("view engine", "ejs");
-app.set("views", "./views");
-app.use(express.static("public"));
-server.listen(3000);
-io.sockets.on('connection', function(socket) {
-    console.log('connect co id: ' + socket.id);
-
-    socket.on("SEND DATA", function(data) {
-        console.log('id ' + socket.id + 'voi message la: ' + data);
-        io.sockets.emit("server-send-data", "Day la sever 111");
-    });
-
-});
-
+// config bcrypt
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 // parse application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 
+
 //Models
 var TestModel = require('./Models/TestModel');
+let RegisterModel = require('./Models/UsersModel');
+const { json } = require('body-parser');
+const UsersModel = require('./Models/UsersModel');
+
+// config theme plate
+app.set("view engine", "ejs");
+app.set("views", "./views");
+app.use(express.static("public"));
+server.listen(3000);
+
+
+//socket io
+let aListUser = [];
+UsersModel.find({}, function(err, data) {
+
+    if (err) {
+        console.log(err);
+    } else {
+        data.forEach(user => {
+            aListUser.push({
+                'username': user.Username,
+                'email': user.Email,
+                'status': 'Offline',
+            });
+        });
+    }
+});
+let aMessage = [];
+io.sockets.on('connection', function(socket) {
+    socket.on("SEND DATA", function(data) {
+        // data{
+        //     "username": username,
+        //     "id": id
+        // }
+        socket.Username = data.username;
+        aListUser.forEach(user => {
+            if (Object.values(user).includes(data.username)) {
+                user.status = 'Online';
+            }
+        });
+        io.sockets.emit("list user active", aListUser);
+    });
+    socket.on("send massage", function(data) {
+        aMessage.push({
+            "username": socket.Username,
+            "message": data.message
+        });
+        io.sockets.emit("addListMessage", aMessage);
+    })
+
+});
 
 app.get('/me/profiles', function(req, res) {
     res.render('profile/create');
@@ -115,4 +167,77 @@ app.put('/me/update/:id', function(req, res) {
 
 app.get('/', function(req, res) {
     res.render('socket.io/home');
+});
+
+app.get('/me/login', function(req, res) {
+    res.render('account/login');
+});
+app.get('/me/register', function(req, res) {
+    res.render('account/register');
+});
+app.post('/me/register', function(req, res, next) {
+    let username = req.body.username;
+    let email = req.body.email;
+    let password = req.body.password;
+    let confirmPassword = req.body.confirmPassword;
+    if (password !== confirmPassword) {
+        res.json({
+            'status': 'error',
+            'message': 'Passwords must be same',
+        });
+    }
+    RegisterModel.findOne({ "email": req.body.email }).then(
+        data => {
+            if (data) {
+                res.json({
+                    'status': 'error',
+                    'message': 'Sorry the email is exist',
+                });
+            } else {
+                bcrypt.hash(password, saltRounds, function(err, hash) {
+                    let passwordBcrypt = hash;
+                    const registerUser = new UsersModel({
+                        Username: username,
+                        Email: email,
+                        Password: passwordBcrypt
+                    });
+                    registerUser.save(function(err) {
+                        if (err) {
+                            res.json({
+                                'status': 'error',
+                                'message': 'create user successfully',
+                            });
+                        } else {
+                            res.redirect('/me/login');
+                        }
+                    });
+                });
+            }
+        }
+    ).catch(next);
+});
+app.post('/me/login', function(req, res, next) {
+    let email = req.body.email;
+    let password = req.body.password;
+    RegisterModel.findOne({
+        Email: email,
+    }).then(
+        data => {
+            bcrypt.compare(password, data.Password, function(err, result) {
+                if (result) {
+                    let token = jwt.sign({ id: data._id }, secretKey, { expiresIn: '1h' });
+                    res.cookie('token', token, { expires: new Date(Date.now() + 900000) });
+                    res.render('chatRoom/chatRoom', { "data": data });
+                } else {
+                    res.json({
+                        'status': 'error',
+                        'message': 'sorry, login error',
+                    });
+                }
+            });
+        }
+    ).catch(next);
+});
+app.get('/chatRoom', function(req, res) {
+    res.render('chatRoom/chatRoom');
 });
