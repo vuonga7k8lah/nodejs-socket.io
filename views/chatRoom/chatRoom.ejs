@@ -78,6 +78,8 @@
                 top: 27px;
                 font-size: 10px;
                 padding: 3px 5px;
+                height: 550px;
+                overflow-y: scroll;
             }
             
             .chat-message {
@@ -90,7 +92,9 @@
             }
             
             .chat-message {
-                background: #f9f9f9;
+                background: #66FFFF;
+                height: 550px;
+                overflow-y: scroll;
             }
             
             .chat li img {
@@ -256,7 +260,8 @@
                 </div>
             </div>
             <script>
-                let socket = io("http://localhost:3000");
+                //let socket = io("http://localhost:3000");
+                let socket = io("https://chatnodejsvuongdttn.herokuapp.com");
                 let id = $("#id").val();
                 let username = $("#username").val();
                 let email = $("#email").val();
@@ -286,6 +291,14 @@
                             'message': contentData
                         });
                     });
+                    $("#logoutUser").click(function() {
+                        console.log('oke');
+                        socket.emit("logout", {
+                            "username": username,
+                            "id": id,
+                            "email": email
+                        });
+                    })
                     let i = 1;
                     socket.on("addListMessage", function(data) {
                         $("#chat-message").html('<ul class="chat"><div id="listchat"></div></ul>');

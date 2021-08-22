@@ -54,7 +54,8 @@ const saltRounds = 10;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-
+//middleware
+let middleware = require('./Middleware/Middleware');
 
 //Models
 var TestModel = require('./Models/TestModel');
@@ -107,13 +108,21 @@ io.sockets.on('connection', function(socket) {
         });
         io.sockets.emit("addListMessage", aMessage);
     })
+    socket.on("logout", function(data) {
+        aListUser.forEach(user => {
+            if (Object.values(user).includes(data.username)) {
+                user.status = 'Offline';
+            }
+        });
+        io.sockets.emit("list user active", aListUser);
 
+    });
 });
 
-app.get('/me/profiles', function(req, res) {
+app.get('/me/profiles', middleware.isLogin, function(req, res) {
     res.render('profile/create');
 });
-app.post("/me/profiles", function(req, res) {
+app.post("/me/profiles", middleware.isLogin, function(req, res) {
     //upload file 
     upload(req, res, function(err) {
         if (err instanceof multer.MulterError) {
@@ -136,7 +145,7 @@ app.post("/me/profiles", function(req, res) {
         }
     });
 });
-app.get('/me/list', function(req, res) {
+app.get('/me/list', middleware.isLogin, function(req, res) {
     TestModel.find({}, function(err, data) {
 
         if (err) {
@@ -146,7 +155,7 @@ app.get('/me/list', function(req, res) {
         }
     });
 });
-app.get('/me/edit', function(req, res) {
+app.get('/me/edit', middleware.isLogin, function(req, res) {
     TestModel.findOne({ "_id": req.query.id }, function(err, data) {
         if (err) {
             res.send('error update');
@@ -155,7 +164,7 @@ app.get('/me/edit', function(req, res) {
         }
     });
 });
-app.put('/me/update/:id', function(req, res) {
+app.put('/me/update/:id', middleware.isLogin, function(req, res) {
     //TestModel.findByIdAndUpdate()
     console.log(req.body);
     res.json({
@@ -166,7 +175,7 @@ app.put('/me/update/:id', function(req, res) {
 
 });
 
-app.get('/', function(req, res) {
+app.get('/', middleware.isLogin, function(req, res) {
     res.render('socket.io/home');
 });
 
@@ -175,6 +184,10 @@ app.get('/me/login', function(req, res) {
 });
 app.get('/me/register', function(req, res) {
     res.render('account/register');
+});
+app.get('/me/logout', function(req, res) {
+    res.clearCookie('token');
+    res.render('account/login');
 });
 app.post('/me/register', function(req, res, next) {
     let username = req.body.username;
@@ -239,6 +252,6 @@ app.post('/me/login', function(req, res, next) {
         }
     ).catch(next);
 });
-app.get('/chatRoom', function(req, res) {
+app.get('/chatRoom', middleware.isLogin, function(req, res) {
     res.render('chatRoom/chatRoom');
 });
