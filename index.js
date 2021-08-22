@@ -94,6 +94,7 @@ io.sockets.on('connection', function(socket) {
         //     "id": id
         // }
         socket.Username = data.username;
+        console.log(aListUser)
         aListUser.forEach(user => {
             if (Object.values(user).includes(data.username)) {
                 user.status = 'Online';
