@@ -62,6 +62,8 @@ var TestModel = require('./Models/TestModel');
 let RegisterModel = require('./Models/UsersModel');
 const { json } = require('body-parser');
 const UsersModel = require('./Models/UsersModel');
+let ContactModel = require('./Models/ContactModel');
+let MessageModel = require('./Models/MessageModel');
 
 // config theme plate
 app.set("view engine", "ejs");
@@ -87,6 +89,32 @@ UsersModel.find({}, function(err, data) {
     }
 });
 let aMessage = [];
+MessageModel.find({}, function(err, data) {
+    if (err) {
+        console.log(err);
+    } else {
+        data.forEach(message => {
+            let username = '';
+            let email = '';
+            UsersModel.findOne({ _id: message.UserID }, function(err, user) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    username = user.Username;
+                    email = user.Email;
+                }
+            })
+            aMessage.push({
+                'username': username,
+                'email': email,
+                'message': message.Message,
+            });
+        });
+    }
+})
+
+
+
 io.sockets.on('connection', function(socket) {
     socket.on("SEND DATA", function(data) {
         // data{
@@ -94,20 +122,36 @@ io.sockets.on('connection', function(socket) {
         //     "id": id
         // }
         socket.Username = data.username;
-        console.log(aListUser)
+        socket.UserID = data.id;
         aListUser.forEach(user => {
             if (Object.values(user).includes(data.username)) {
                 user.status = 'Online';
             }
         });
         io.sockets.emit("list user active", aListUser);
+        io.sockets.emit("addListMessage", aMessage);
     });
     socket.on("send massage", function(data) {
-        aMessage.push({
-            "username": socket.Username,
-            "message": data.message
+
+        const messageModel = new MessageModel({
+            RoomID: '1',
+            UserID: socket.UserID,
+            Message: data.message
         });
-        io.sockets.emit("addListMessage", aMessage);
+        messageModel.save(function(err) {
+            if (err) {
+                res.json({
+                    'status': 'error',
+                    'message': 'update message error',
+                });
+            } else {
+                aMessage.push({
+                    "username": socket.Username,
+                    "message": data.message
+                });
+                io.sockets.emit("addListMessage", aMessage);
+            }
+        });
     })
     socket.on("logout", function(data) {
         aListUser.forEach(user => {

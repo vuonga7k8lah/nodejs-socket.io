@@ -21,6 +21,8 @@
             .friend-list {
                 list-style: none;
                 margin-left: -40px;
+                height: 550px;
+                overflow-y: scroll;
             }
             
             .friend-list li {
@@ -91,7 +93,7 @@
             
             .chat-message {
                 background: #66FFFF;
-                height: 550px;
+                height: 600px;
                 overflow-y: scroll;
             }
             
@@ -258,8 +260,8 @@
                 </div>
             </div>
             <script>
-                // let socket = io("http://localhost:3000");
-                let socket = io("https://chatnodejsvuongdttn.herokuapp.com");
+                let socket = io("http://localhost:3000");
+                //let socket = io("https://chatnodejsvuongdttn.herokuapp.com");
                 let id = $("#id").val();
                 let username = $("#username").val();
                 let email = $("#email").val();
