@@ -95,6 +95,7 @@ let aMessage = [];
 io.sockets.on('connection', function(socket) {
 
     socket.on("SEND DATA", function(data) {
+        aMessage = [];
         MessageModel.find({}, function(err, data) {
             if (err) {
                 console.log(err);
