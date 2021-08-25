@@ -89,6 +89,7 @@ UsersModel.find({}, function(err, data) {
     }
 });
 let aMessage = [];
+
 MessageModel.find({}, function(err, data) {
     if (err) {
         console.log(err);
