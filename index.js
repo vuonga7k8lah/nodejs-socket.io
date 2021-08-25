@@ -94,31 +94,30 @@ let aMessage = [];
 
 io.sockets.on('connection', function(socket) {
 
-    MessageModel.find({}, function(err, data) {
-        if (err) {
-            console.log(err);
-        } else {
-            data.forEach(message => {
-                let username = '';
-                let email = '';
-                UsersModel.findOne({ _id: message.UserID }, function(err, user) {
-                    if (err) {
-                        console.log(err);
-                    } else {
-                        username = user.Username;
-                        email = user.Email;
-                    }
-                })
-                aMessage.push({
-                    'username': username,
-                    'email': email,
-                    'message': message.Message,
-                });
-            });
-        }
-    })
-
     socket.on("SEND DATA", function(data) {
+        MessageModel.find({}, function(err, data) {
+            if (err) {
+                console.log(err);
+            } else {
+                data.forEach(message => {
+                    let username = '';
+                    let email = '';
+                    UsersModel.findOne({ _id: message.UserID }, function(err, user) {
+                        if (err) {
+                            console.log(err);
+                        } else {
+                            username = user.Username;
+                            email = user.Email;
+                        }
+                    })
+                    aMessage.push({
+                        'username': username,
+                        'email': email,
+                        'message': message.Message,
+                    });
+                });
+            }
+        });
         // data{
         //     "username": username,
         //     "id": id
